@@ -21,12 +21,10 @@ namespace ariel
 
         void printChart(std::ostream &os, const std::string &prefix, const Node *node) const;
 
-        int depthOfChart(Node *node);
-
     public:
         OrgChart() : _root(nullptr) {}
 
-        ~OrgChart();
+        //~OrgChart();
 
         OrgChart &add_root(std::string val);
 
@@ -112,7 +110,7 @@ namespace ariel
                 std::vector<ariel::Node *> temp = this->ptr_current->_parent->_children;
                 std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end() , this->ptr_current);
                 it++;
-                return (*it);
+                return (*it != nullptr);
             }
 
             std::string &operator*() const
@@ -146,10 +144,13 @@ namespace ariel
                 switch (this->_type)
                 {
                 case Order::LEVELORDER:
+                    this->ptr_current = nullptr;
                     break;
                 case Order::REVERSEORDER:
+                    this->ptr_current = nullptr;
                     break;
                 case Order::PREORDER:
+                    this->ptr_current = nullptr;
                     break;
                 }
                 return *this;
@@ -183,6 +184,7 @@ namespace ariel
             {
                 return iterator(nullptr, iterator::Order::REVERSEORDER);
             }
+            //need to check if correct
             return iterator(_root, _root, iterator::Order::REVERSEORDER);
         }
 

@@ -40,34 +40,19 @@ namespace ariel
     {
     }
 
-    //https://www.geeksforgeeks.org/depth-n-ary-tree/
-    int OrgChart::depthOfChart(Node *node)
-    {
-        if (!node)
-        {
-            return 0;
-        }
-        int maxdepth = 0;
-        for (vector<Node *>::iterator it = node->_children.begin(); it != node->_children.end(); it++)
-        {
-            maxdepth = max(maxdepth, depthOfChart(*it));
-        }
-        return maxdepth + 1;
-    }
-
-    OrgChart::~OrgChart()
-    {
-        std::queue<Node *> toRemove;
-        for (auto it = this->begin_preorder(); it != this->end_preorder(); ++it)
-        {
-            toRemove.push(&it.Node());
-        }
-        while (!toRemove.empty())
-        {
-            delete toRemove.front();
-            toRemove.pop();
-        }
-    }
+    // OrgChart::~OrgChart()
+    // {
+    //     std::queue<Node *> toRemove;
+    //     for (auto it = this->begin_preorder(); it != this->end_preorder(); ++it)
+    //     {
+    //         toRemove.push(&it.Node());
+    //     }
+    //     while (!toRemove.empty())
+    //     {
+    //         delete toRemove.front();
+    //         toRemove.pop();
+    //     }
+    // }
 
     OrgChart &OrgChart::add_root(string val)
     {
