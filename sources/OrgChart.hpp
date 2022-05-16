@@ -19,7 +19,9 @@ namespace ariel
 
         Node *find(std::string val, Node *currentNode);
 
-        void printChart(std::ostream &os, const std::string &prefix, const Node *node) const;
+        void printChart(std::ostream &os, const Node *node, std::vector<bool> flag, int depth = 0) const;
+
+        size_t numOfNodes() const;
 
     public:
         OrgChart() : _root(nullptr) {}
@@ -64,20 +66,33 @@ namespace ariel
             void brother()
             {
                 this->prev = this->ptr_current;
-                for (auto it = this->ptr_current->_parent->_children.begin(); it != ptr_current->_parent->_children.end(); it++){
-                    if ((*it) == this->ptr_current){
+                for (auto it = this->ptr_current->_parent->_children.begin(); it != ptr_current->_parent->_children.end(); it++)
+                {
+                    if ((*it) == this->ptr_current)
+                    {
                         it++;
                         this->ptr_current = (*it);
                         break;
                     }
-                }           
+                }
             }
-
 
         public:
             iterator(Node *root, Node *curr, Order type) : _type(type), _root(root), ptr_current(curr)
             {
-
+                this->last = this->_root;
+                if (this->_root != nullptr)
+                {
+                    if (this->_type == Order::LEVELORDER)
+                    {
+                        {
+                            while (!this->last->_children.empty())
+                            {
+                                this->last = this->last->_children.at(this->last->_children.size() - 1);
+                            }
+                        }
+                    }
+                }
             }
 
             iterator(Node *root, Order type) : _type(type), _root(root)
@@ -106,9 +121,10 @@ namespace ariel
                 return !this->ptr_current->_children.empty();
             }
 
-            bool has_brothers(){
+            bool has_brothers()
+            {
                 std::vector<ariel::Node *> temp = this->ptr_current->_parent->_children;
-                std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end() , this->ptr_current);
+                std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end(), this->ptr_current);
                 it++;
                 return (*it != nullptr);
             }
@@ -143,18 +159,70 @@ namespace ariel
 
                 switch (this->_type)
                 {
-                case Order::LEVELORDER:
-                    this->ptr_current = nullptr;
-                    break;
-                case Order::REVERSEORDER:
-                    this->ptr_current = nullptr;
-                    break;
-                case Order::PREORDER:
-                    this->ptr_current = nullptr;
-                    break;
+                    case Order::LEVELORDER:
+                    {
+                        if (!this->ptr_current->_parent)
+                        {
+                            this->ptr_current = this->_root;
+                            break;
+                        }
+                        ariel::Node *parentVector = this->ptr_current->_parent;
+                        if (has_brothers())
+                        {
+                            brother();
+                            break;
+                        }
+                        int depth = 0;
+                        while (this->ptr_current->_parent != nullptr)
+                        {
+                            depth++;
+                            this->ptr_current = this->ptr_current->_parent;
+                        }
+                        for (int i = 0; i <= depth; i++)
+                        {
+                            if (has_children())
+                            {
+                                son();
+                            }
+                            else
+                            {
+                                brother();
+                                i--;
+                            }
+                        }
+                        break;
+                    }
+                    case Order::REVERSEORDER:
+                    {
+                        this->ptr_current = nullptr;
+                        break;
+                    }
+                    case Order::PREORDER:
+                    {
+                        // if (this->prev == nullptr)
+                        // {
+                        //     if (this->has_children())
+                        //     {
+                        //         this->son();
+                        //         break;
+                        //     }
+                        //     this->ptr_current = nullptr;
+                        // }
+                        // if (this->prev == this->ptr_current->_parent)
+                        // {
+                        //     if (this->has_children())
+                        //     {
+                        //         this->son();
+                        //         break;
+                        //     }
+                        // }
+                        this->ptr_current = nullptr;
+                        break;
+                    }
                 }
-                return *this;
+                    return *this;
             }
+                
 
             iterator operator++(int)
             {
@@ -164,55 +232,60 @@ namespace ariel
             }
         };
 
-        iterator begin_level_order()
-        {
-            if (this->_root == nullptr)
+            iterator begin_level_order()
+            {
+                if (this->_root == nullptr)
+                {
+                    return iterator(nullptr, iterator::Order::LEVELORDER);
+                }
+                return iterator(_root, _root, iterator::Order::LEVELORDER);
+            }
+
+            iterator end_level_order()
             {
                 return iterator(nullptr, iterator::Order::LEVELORDER);
             }
-            return iterator(_root, _root, iterator::Order::LEVELORDER);
-        }
 
-        iterator end_level_order()
-        {
-            return iterator(nullptr, iterator::Order::LEVELORDER);
-        }
+            iterator begin_reverse_order()
+            {
+                if (this->_root == nullptr)
+                {
+                    return iterator(nullptr, iterator::Order::REVERSEORDER);
+                }
+                Node *p = this->_root;
+                while (!p->_children.empty())
+                {
+                    p = p->_children.at(0);
+                }
+                return iterator(this->_root, p, iterator::Order::REVERSEORDER);
+            }
 
-        iterator begin_reverse_order()
-        {
-            if (this->_root == nullptr)
+            iterator reverse_order()
             {
                 return iterator(nullptr, iterator::Order::REVERSEORDER);
             }
-            //need to check if correct
-            return iterator(_root, _root, iterator::Order::REVERSEORDER);
-        }
 
-        iterator reverse_order()
-        {
-            return iterator(nullptr, iterator::Order::REVERSEORDER);
-        }
+            iterator begin_preorder()
+            {
+                if (this->_root == nullptr)
+                {
+                    return iterator(nullptr, iterator::Order::PREORDER);
+                }
+                return iterator(this->_root, iterator::Order::PREORDER);
+            }
 
-        iterator begin_preorder()
-        {
-            if (this->_root == nullptr)
+            iterator end_preorder()
             {
                 return iterator(nullptr, iterator::Order::PREORDER);
             }
-            return iterator(this->_root, iterator::Order::PREORDER);
-        }
-        iterator end_preorder()
-        {
-            return iterator(nullptr, iterator::Order::PREORDER);
-        }
 
-        iterator begin()
-        {
-            return this->begin_level_order();
-        }
-        iterator end()
-        {
-            return this->end_level_order();
-        }
-    };
-}
+            iterator begin()
+            {
+                return this->begin_level_order();
+            }
+            iterator end()
+            {
+                return this->end_level_order();
+            }
+        };
+    }

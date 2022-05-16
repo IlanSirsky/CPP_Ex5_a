@@ -4,7 +4,7 @@ using namespace std;
 
 namespace ariel
 {
-
+    //OrgChart functions
     Node *OrgChart::find(std::string val)
     {
         if (this->_root == nullptr)
@@ -14,7 +14,7 @@ namespace ariel
         return find(val, this->_root);
     }
 
-    // based on https://stackoverflow.com/questions/20735708/how-to-get-an-element-in-n-ary-trees
+    // https://stackoverflow.com/questions/20735708/how-to-get-an-element-in-n-ary-trees
     Node *OrgChart::find(std::string val, Node *currentNode)
     {
         if (currentNode == nullptr)
@@ -36,8 +36,35 @@ namespace ariel
         return nullptr;
     }
 
-    void OrgChart::printChart(std::ostream &os, const std::string &prefix, const Node *node) const
+    // https://www.geeksforgeeks.org/print-n-ary-tree-graphically/
+    void OrgChart::printChart(std::ostream &os, const Node *node, vector<bool> flag, int depth) const
     {
+        if (!node)
+        {
+            return;
+        }
+        for (size_t i = 1; i < depth; i++)
+        {
+            os << "    ";
+        }
+        if (depth == 0)
+        {
+            os << node->_value << endl;
+        }
+        else if ((*node).hasBrothers())
+        {
+            os << "+--- " << node->_value << endl;
+            flag[(size_t)depth] = false;
+        }
+        else
+        {
+            os << "+--- " << node->_value << endl;
+        }
+        for (auto it = node->_children.begin(); it != node->_children.end(); it++)
+        {
+            printChart(os, *it, flag, depth + 1);
+        }
+        flag[(size_t)depth] = true;
     }
 
     // OrgChart::~OrgChart()
@@ -75,14 +102,43 @@ namespace ariel
         return *this;
     }
 
+    // https://www.geeksforgeeks.org/number-children-given-node-n-ary-tree/
+    size_t numberOfChildren(Node *root, string x)
+    {
+        size_t numChildren = 0;
+        if (root == NULL){
+            return 0;
+        }
+        queue<Node *> q;
+        q.push(root);
+        while (!q.empty())
+        {
+            int n = q.size();
+            while (n > 0)
+            {
+                Node *p = q.front();
+                q.pop();
+                if (p->_value == x)
+                {
+                    numChildren = numChildren + p->_children.size();
+                    return numChildren;
+                }
+                for (size_t i = 0; i < p->_children.size(); i++)
+                    q.push(p->_children[i]);
+                n--;
+            }
+        }
+        return numChildren;
+    }
+
     std::ostream &operator<<(std::ostream &os, const OrgChart &chart)
     {
-        os << chart._root->_value << std::endl;
-        chart.printChart(os, "", chart._root);
+        size_t numOfNodes = numberOfChildren(chart._root, chart._root->_value);
+        std::vector<bool> flag(numOfNodes, true);
+        chart.printChart(os, chart._root, flag);
         os << std::endl;
         return os;
     }
-
     
 
 }
