@@ -50,6 +50,7 @@ namespace ariel
             Node *prev = nullptr;
             Node *last;
             Order _type; // 0 = LEVELORDER, 1 = REVERSEORDER, 2 = PREORDER
+            
 
             void parent()
             {
@@ -57,24 +58,53 @@ namespace ariel
                 this->ptr_current = this->ptr_current->_parent;
             }
 
-            void son()
+            void son(size_t idx)
             {
                 this->prev = this->ptr_current;
-                this->ptr_current = this->ptr_current->_children.at(0);
+                this->ptr_current = this->ptr_current->_children.at(idx);
             }
 
             void brother()
             {
                 this->prev = this->ptr_current;
-                for (auto it = this->ptr_current->_parent->_children.begin(); it != ptr_current->_parent->_children.end(); it++)
-                {
-                    if ((*it) == this->ptr_current)
+                // size_t d = 0;
+                    for (auto it = this->ptr_current->_parent->_children.begin(); it != ptr_current->_parent->_children.end(); it++)
                     {
-                        it++;
-                        this->ptr_current = (*it);
-                        break;
+                        if ((*it) == this->ptr_current && has_brothers())
+                        {
+                            it++;
+                            this->ptr_current = (*it);
+                            break;
+                        }
                     }
-                }
+                    // d++;
+                    parent();
+                           // std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end(), this->ptr_current);
+                    auto find = std::find(this->ptr_current->_children.begin(), this->ptr_current->_children.end(), this->prev);
+                    int next_index = find - this->ptr_current->_children.begin();
+                    next_index++;
+                    std:vector<int> next;
+                    /*
+                        NEED TO IMPLEMENT NEXT INDEX FOR EVERY DEPTH IN CURRENT SUBTREE
+                        GOOD NIGHT
+                        ZAIN BAAIN
+                    */
+                    int count = 1;
+                    while(count != 0){
+                        if(ptr_current->_children.size() <= next_index){
+                            parent();
+                            count++;
+                        }
+                        else{
+                            this->ptr_current = this->ptr_current->_children.at((size_t)next_index);
+                            count--;
+                        }
+                        next_index = std::find(this->ptr_current->_children.begin(), this->ptr_current->_children.end(), this->prev) - this->ptr_current->_children.begin();
+                        next_index++;
+                    }
+                        
+                    
+                
             }
 
         public:
@@ -126,7 +156,7 @@ namespace ariel
                 std::vector<ariel::Node *> temp = this->ptr_current->_parent->_children;
                 std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end(), this->ptr_current);
                 it++;
-                return (*it != nullptr);
+                return (it != temp.end());
             }
 
             std::string &operator*() const
@@ -163,8 +193,12 @@ namespace ariel
                     {
                         if (!this->ptr_current->_parent)
                         {
-                            this->ptr_current = this->_root;
-                            break;
+                            // this->ptr_current = this->_root;
+                            if(has_children()){
+                                son(0);
+                                break;
+                            }
+                            
                         }
                         ariel::Node *parentVector = this->ptr_current->_parent;
                         if (has_brothers())
@@ -173,22 +207,31 @@ namespace ariel
                             break;
                         }
                         int depth = 0;
+                        std::vector<size_t> current_index;
+                        current_index.push_back(0);
                         while (this->ptr_current->_parent != nullptr)
                         {
                             depth++;
+                            current_index.push_back(0);
+                            
                             this->ptr_current = this->ptr_current->_parent;
                         }
-                        for (int i = 0; i <= depth; i++)
+                        for (size_t i = 0; i <= depth; i++)
                         {
                             if (has_children())
                             {
-                                son();
+                                this->ptr_current = this->ptr_current->_children.at(current_index.at(i)++);
                             }
-                            else
+                            else// if(has_brothers())
                             {
                                 brother();
                                 i--;
                             }
+                            // else{
+                            //     parent();
+                            //     current_index.at(i-1)++;
+                            //     i--;
+                            // }
                         }
                         break;
                     }
