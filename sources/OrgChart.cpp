@@ -4,7 +4,7 @@ using namespace std;
 
 namespace ariel
 {
-    //OrgChart functions
+    // OrgChart functions
     Node *OrgChart::find(std::string val)
     {
         if (this->_root == nullptr)
@@ -67,19 +67,19 @@ namespace ariel
         flag[(size_t)depth] = true;
     }
 
-    // OrgChart::~OrgChart()
-    // {
-    //     std::queue<Node *> toRemove;
-    //     for (auto it = this->begin_preorder(); it != this->end_preorder(); ++it)
-    //     {
-    //         toRemove.push(&it.Node());
-    //     }
-    //     while (!toRemove.empty())
-    //     {
-    //         delete toRemove.front();
-    //         toRemove.pop();
-    //     }
-    // }
+    OrgChart::~OrgChart()
+    {
+        std::queue<Node *> toRemove;
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            toRemove.push(&it.Node());
+        }
+        while (!toRemove.empty())
+        {
+            delete toRemove.front();
+            toRemove.pop();
+        }
+    }
 
     OrgChart &OrgChart::add_root(string val)
     {
@@ -106,7 +106,8 @@ namespace ariel
     size_t numberOfChildren(Node *root, string x)
     {
         size_t numChildren = 0;
-        if (root == NULL){
+        if (root == NULL)
+        {
             return 0;
         }
         queue<Node *> q;
@@ -139,6 +140,5 @@ namespace ariel
         os << std::endl;
         return os;
     }
-    
 
 }

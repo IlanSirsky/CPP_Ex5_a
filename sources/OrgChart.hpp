@@ -7,6 +7,7 @@
 #include <string>
 #include <queue>
 #include <vector>
+#include <stack>
 
 namespace ariel
 {
@@ -26,7 +27,15 @@ namespace ariel
     public:
         OrgChart() : _root(nullptr) {}
 
-        //~OrgChart();
+        OrgChart(OrgChart &chart) = default;
+
+        OrgChart(OrgChart &&chart) noexcept = default;
+
+        OrgChart &operator=(OrgChart chart);
+
+        OrgChart &operator=(OrgChart &&chart) noexcept;
+    
+        ~OrgChart();
 
         OrgChart &add_root(std::string val);
 
@@ -50,7 +59,8 @@ namespace ariel
             Node *prev = nullptr;
             Node *last;
             Order _type; // 0 = LEVELORDER, 1 = REVERSEORDER, 2 = PREORDER
-            
+            std::queue<ariel::Node *> Q;
+            std::stack<ariel::Node *> S;
 
             void parent()
             {
@@ -64,79 +74,57 @@ namespace ariel
                 this->ptr_current = this->ptr_current->_children.at(idx);
             }
 
-            void brother()
+            void right_sibling()
             {
+                auto it = std::find(this->ptr_current->_parent->_children.begin(), this->ptr_current->_parent->_children.end(), this->ptr_current);
+                int index = it - this->ptr_current->_parent->_children.begin();
+                index++;
                 this->prev = this->ptr_current;
-                // size_t d = 0;
-                    for (auto it = this->ptr_current->_parent->_children.begin(); it != ptr_current->_parent->_children.end(); it++)
-                    {
-                        if ((*it) == this->ptr_current && has_brothers())
-                        {
-                            it++;
-                            this->ptr_current = (*it);
-                            break;
-                        }
-                    }
-                    // d++;
-                    parent();
-                           // std::vector<ariel::Node *>::iterator it = std::find(temp.begin(), temp.end(), this->ptr_current);
-                    auto find = std::find(this->ptr_current->_children.begin(), this->ptr_current->_children.end(), this->prev);
-                    int next_index = find - this->ptr_current->_children.begin();
-                    next_index++;
-                    std:vector<int> next;
-                    /*
-                        NEED TO IMPLEMENT NEXT INDEX FOR EVERY DEPTH IN CURRENT SUBTREE
-                        GOOD NIGHT
-                        ZAIN BAAIN
-                    */
-                    int count = 1;
-                    while(count != 0){
-                        if(ptr_current->_children.size() <= next_index){
-                            parent();
-                            count++;
-                        }
-                        else{
-                            this->ptr_current = this->ptr_current->_children.at((size_t)next_index);
-                            count--;
-                        }
-                        next_index = std::find(this->ptr_current->_children.begin(), this->ptr_current->_children.end(), this->prev) - this->ptr_current->_children.begin();
-                        next_index++;
-                    }
-                        
-                    
-                
+                this->ptr_current = this->ptr_current->_parent->_children.at((size_t)index);
             }
 
         public:
-            iterator(Node *root, Node *curr, Order type) : _type(type), _root(root), ptr_current(curr)
+            iterator(Node *root, Node *curr, Order type) : _type(type), _root(root), ptr_current(curr) //LEVEL ORDER
             {
                 this->last = this->_root;
-                if (this->_root != nullptr)
+                for (ariel::Node *node : this->ptr_current->_children)
                 {
-                    if (this->_type == Order::LEVELORDER)
-                    {
-                        {
-                            while (!this->last->_children.empty())
-                            {
-                                this->last = this->last->_children.at(this->last->_children.size() - 1);
-                            }
-                        }
-                    }
+                    Q.push(node);
                 }
+                this->last = nullptr;
             }
 
-            iterator(Node *root, Order type) : _type(type), _root(root)
+            iterator(Node *root, Order type) : _type(type), _root(root) //PREORDER || REVERSEORDER
             {
                 this->ptr_current = root;
-                this->last = this->_root;
+                this->last = this->_root;          
                 if (this->_root != nullptr)
                 {
-                    if (this->_type == Order::REVERSEORDER || this->_type == Order::PREORDER)
+                    if (this->_type == Order::PREORDER)
                     {
                         while (!this->last->_children.empty())
                         {
-                            this->last = this->last->_children.at(0);
+                            this->last = this->last->_children.at(this->last->_children.size() - 1);
                         }
+                    }
+                    if (this->_type == Order::REVERSEORDER)
+                    {
+                        this->last = _root;
+                        std::queue<ariel::Node *> q;
+                        ariel::Node *n = this->_root;
+                        q.push(n);
+                        while (!q.empty())
+                        {
+                            S.push(q.front());
+                            n = q.front();
+                            q.pop();
+                            for (auto it = n->_children.rbegin(); it != n->_children.rend(); ++it)
+                            {
+                                q.push(*it);
+                            }
+                        }
+                        this->ptr_current = S.top();
+                        S.pop();
                     }
                 }
             }
@@ -189,83 +177,54 @@ namespace ariel
 
                 switch (this->_type)
                 {
-                    case Order::LEVELORDER:
+                case Order::LEVELORDER:
+                {
+                    if (!Q.empty())
                     {
-                        if (!this->ptr_current->_parent)
+                        this->ptr_current = Q.front();
+                        Q.pop();
+                        for (ariel::Node *node : this->ptr_current->_children)
                         {
-                            // this->ptr_current = this->_root;
-                            if(has_children()){
-                                son(0);
-                                break;
-                            }
-                            
+                            Q.push(node);
                         }
-                        ariel::Node *parentVector = this->ptr_current->_parent;
+                    }
+                    else
+                    {
+                        this->ptr_current = nullptr;
+                    }
+                    break;
+                }
+                case Order::REVERSEORDER:
+                {
+                    this->ptr_current = S.top();
+                    S.pop();
+                    break;
+                }
+                case Order::PREORDER:
+                {
+                    if (has_children())
+                    {
+                        son(0);
+                        break;
+                    }
+                    while (this->ptr_current->_parent != nullptr)
+                    {
                         if (has_brothers())
                         {
-                            brother();
-                            break;
+                            right_sibling();
                         }
-                        int depth = 0;
-                        std::vector<size_t> current_index;
-                        current_index.push_back(0);
-                        while (this->ptr_current->_parent != nullptr)
+                        else
                         {
-                            depth++;
-                            current_index.push_back(0);
-                            
-                            this->ptr_current = this->ptr_current->_parent;
-                        }
-                        for (size_t i = 0; i <= depth; i++)
-                        {
-                            if (has_children())
-                            {
-                                this->ptr_current = this->ptr_current->_children.at(current_index.at(i)++);
-                            }
-                            else// if(has_brothers())
-                            {
-                                brother();
-                                i--;
-                            }
-                            // else{
-                            //     parent();
-                            //     current_index.at(i-1)++;
-                            //     i--;
-                            // }
+                            parent();
+                            right_sibling();
                         }
                         break;
                     }
-                    case Order::REVERSEORDER:
-                    {
-                        this->ptr_current = nullptr;
-                        break;
-                    }
-                    case Order::PREORDER:
-                    {
-                        // if (this->prev == nullptr)
-                        // {
-                        //     if (this->has_children())
-                        //     {
-                        //         this->son();
-                        //         break;
-                        //     }
-                        //     this->ptr_current = nullptr;
-                        // }
-                        // if (this->prev == this->ptr_current->_parent)
-                        // {
-                        //     if (this->has_children())
-                        //     {
-                        //         this->son();
-                        //         break;
-                        //     }
-                        // }
-                        this->ptr_current = nullptr;
-                        break;
-                    }
+                    break;
                 }
-                    return *this;
+                }
+                return *this;
             }
-                
 
             iterator operator++(int)
             {
@@ -275,60 +234,55 @@ namespace ariel
             }
         };
 
-            iterator begin_level_order()
-            {
-                if (this->_root == nullptr)
-                {
-                    return iterator(nullptr, iterator::Order::LEVELORDER);
-                }
-                return iterator(_root, _root, iterator::Order::LEVELORDER);
-            }
-
-            iterator end_level_order()
+        iterator begin_level_order()
+        {
+            if (this->_root == nullptr)
             {
                 return iterator(nullptr, iterator::Order::LEVELORDER);
             }
+            return iterator(_root, _root, iterator::Order::LEVELORDER);
+        }
 
-            iterator begin_reverse_order()
-            {
-                if (this->_root == nullptr)
-                {
-                    return iterator(nullptr, iterator::Order::REVERSEORDER);
-                }
-                Node *p = this->_root;
-                while (!p->_children.empty())
-                {
-                    p = p->_children.at(0);
-                }
-                return iterator(this->_root, p, iterator::Order::REVERSEORDER);
-            }
+        iterator static end_level_order()
+        {
+            return iterator(nullptr, iterator::Order::LEVELORDER);
+        }
 
-            iterator reverse_order()
+        iterator begin_reverse_order()
+        {
+            if (this->_root == nullptr)
             {
                 return iterator(nullptr, iterator::Order::REVERSEORDER);
             }
+            return iterator(this->_root, iterator::Order::REVERSEORDER);
+        }
 
-            iterator begin_preorder()
-            {
-                if (this->_root == nullptr)
-                {
-                    return iterator(nullptr, iterator::Order::PREORDER);
-                }
-                return iterator(this->_root, iterator::Order::PREORDER);
-            }
+        iterator static reverse_order()
+        {
+            return iterator(nullptr, iterator::Order::REVERSEORDER);
+        }
 
-            iterator end_preorder()
+        iterator begin_preorder()
+        {
+            if (this->_root == nullptr)
             {
                 return iterator(nullptr, iterator::Order::PREORDER);
             }
+            return iterator(this->_root, iterator::Order::PREORDER);
+        }
 
-            iterator begin()
-            {
-                return this->begin_level_order();
-            }
-            iterator end()
-            {
-                return this->end_level_order();
-            }
-        };
-    }
+        iterator static end_preorder()
+        {
+            return iterator(nullptr, iterator::Order::PREORDER);
+        }
+
+        iterator begin()
+        {
+            return this->begin_level_order();
+        }
+        iterator static end()
+        {
+            return iterator(nullptr, iterator::Order::LEVELORDER);
+        }
+    };
+}

@@ -91,7 +91,7 @@ TEST_CASE("TEST ITERATORS2")
       .add_sub("Production Manager", "Manufacturing Workshop")
       .add_sub("Production Manager", "Occupational Hazards");
     cout << organization << endl;
-
+    
     for (auto i = organization.begin(); i != organization.end(); ++i)
     {
         res.push_back(*i);
